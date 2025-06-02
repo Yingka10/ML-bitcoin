@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>預測結果</title>
+    <style>
+        /* ...existing styles... */
+        
+        /* 新增樣式 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .model-prediction {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .model-prediction p {
+            font-size: 1.8em;
+            line-height: 1.5;
+        }
+
+        .home-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        <h1>市場趨勢分析結果</h1>
+        <div class="result-content">
+            {% if prediction %}
+                <div class="result-header">
+                </div>        
+                <div class="model-prediction">
+                    <h1>Gemini 分析結果</h1>
+                    <p>{{ prediction }}</p>
+                </div>
+                <a href="{{ url_for('index') }}" class="home-btn">返回首頁</a>
+            {% else %}
+                <div class="error">錯誤：未取得分析結果</div>
+                <a href="{{ url_for('index') }}" class="home-btn">返回首頁</a>
+            {% endif %}
+        </div>
+</body>
+</html>
