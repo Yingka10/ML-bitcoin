@@ -138,7 +138,7 @@ def get_bitcoin_5day_ohlc_chart(end_date=None):
             end_dt = datetime.strptime(end_date, '%Y-%m-%d').replace(tzinfo=timezone.utc)
             # 多獲取幾天確保數據足夠
             start_timestamp = int(end_dt.timestamp() - 8 * 86400)  # 獲取8天數據
-            end_timestamp = int(end_dt.timestamp())
+            end_timestamp = int(end_dt.timestamp()+ 86399)
             
             print(f"獲取OHLC數據範圍: {datetime.fromtimestamp(start_timestamp)} 到 {datetime.fromtimestamp(end_timestamp)}")
             
@@ -332,7 +332,7 @@ def generate_llm_analysis(fgi_values, prices, image_class, image_prob, regressio
     3.  風險等級評估（1-5級）
     4.  明確的操作建議（買入/持有/觀望/賣出）
 
-    請以條列式呈現分析結果，並說明各項指標的影響。
+    請以條列式列點呈現分析結果，並說明各項指標的影響。
     """
 
     role_description = """

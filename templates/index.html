@@ -7,7 +7,6 @@
     <style>
         body {
             font-family: 'Microsoft JhengHei', Arial, sans-serif;
-            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f5f5;
@@ -18,6 +17,8 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 1600px;
+            margin: 0 auto;
         }
         h1 {
             color: #333;
@@ -288,140 +289,227 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+        .main-container {
+            display: flex;
+            gap: 20px;
+            margin: 0 auto;
+        }
+
+        .data-section {
+            flex: 1;
+        }
+
+        .analysis-section {
+            flex: 1;
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            display: none;  /* 初始隱藏 */
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .analysis-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .prediction-item {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease-out forwards;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Styles for Analysis Section Text */
+        .analysis-content > h2 {
+            font-size: 24px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        #analysisResults h2 {
+            font-size: 20px;
+            color: #333;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+
+        .model-prediction pre {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #fdfdfd;
+            padding: 20px;
+            border: 1px solid #e7e7e7;
+            border-radius: 8px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Bitcoin 市場趨勢預測系統</h1>
-        
-        <form id="predictionForm" method="post" action="{{ url_for('index') }}" enctype="multipart/form-data">
-            <!-- 日期選擇區域 -->
-            <div class="section">
-                <h2>選擇分析日期</h2>
-                <div class="date-section">
-                    <label for="analysisDate">分析日期：</label>
-                    <input type="date" id="analysisDate" name="analysisDate" required>
-                    <button type="button" class="fetch-btn" id="fetchBtn" onclick="fetchDataForDate()">
-                        獲取前5天數據
+        <div class="main-container">
+            <div class="data-section">
+                <h1>Bitcoin 市場趨勢預測系統</h1>
+                
+                <form id="predictionForm" method="post" action="{{ url_for('index') }}" enctype="multipart/form-data">
+                    <div class="section">
+                        <h2>選擇分析日期</h2>
+                        <div class="date-section">
+                            <label for="analysisDate">分析日期：</label>
+                            <input type="date" id="analysisDate" name="analysisDate" required>
+                            <button type="button" class="fetch-btn" id="fetchBtn" onclick="fetchDataForDate()">
+                                獲取前5天數據
+                            </button>
+                            <span id="dataStatus" class="status-indicator" style="display: none;"></span>
+                        </div>
+                        <div id="loadingMessage" class="loading" style="display: none;">
+                            正在獲取數據，請稍候...
+                        </div>
+                        <div id="errorMessage" class="error" style="display: none;"></div>
+                    </div>
+
+                    <div id="dataDisplay" class="section data-display">
+                        <h2>API 獲取的數據</h2>
+                        
+                        <h3>Fear & Greed Index (過去5天)</h3>
+                        <table id="fgiTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>日期</th>
+                                    <th>指數值</th>
+                                    <th>情緒分類</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+
+                        <h3>Bitcoin 價格 (過去5天)</h3>
+                        <table id="priceTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>日期</th>
+                                    <th>價格 (USD)</th>
+                                    <th>變化</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+
+                        <div class="kline-chart-section">
+                            <h3>五天內K線圖</h3>
+                            <div class="chart-info">
+                            </div>
+                            <div class="chart-container">
+                                <img id="analysisChart" src="" alt="5條K線圖" style="display: none;">
+                            </div>
+                            <div id="imageAnalysisResult" class="image-analysis-result">
+                                <span id="imageResultText"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="manualInputSection" class="section manual-input-section disabled" style="display: none;">
+                        <h2>手動輸入數據（備用選項）</h2>
+                        <p style="color: #666; font-size: 14px;">
+                            ⚠️ 僅在 API 數據獲取失敗時使用此選項
+                        </p>
+                        
+                        <h3>過去 5 天的 Fear & Greed Index：</h3>
+                        <div id="manualFgiInputs">
+                            <div class="input-row">
+                                <label for="fgi0">第 1 天：</label>
+                                <input type="number" id="fgi0" name="fgi" min="0" max="100" step="1" placeholder="0-100">
+                            </div>
+                            <div class="input-row">
+                                <label for="fgi1">第 2 天：</label>
+                                <input type="number" id="fgi1" name="fgi" min="0" max="100" step="1" placeholder="0-100">
+                            </div>
+                            <div class="input-row">
+                                <label for="fgi2">第 3 天：</label>
+                                <input type="number" id="fgi2" name="fgi" min="0" max="100" step="1" placeholder="0-100">
+                            </div>
+                            <div class="input-row">
+                                <label for="fgi3">第 4 天：</label>
+                                <input type="number" id="fgi3" name="fgi" min="0" max="100" step="1" placeholder="0-100">
+                            </div>
+                            <div class="input-row">
+                                <label for="fgi4">第 5 天：</label>
+                                <input type="number" id="fgi4" name="fgi" min="0" max="100" step="1" placeholder="0-100">
+                            </div>
+                        </div>
+
+                        <h3>過去 5 天的價格（最新放最前）：</h3>
+                        <div id="manualPriceInputs">
+                            <div class="input-row">
+                                <label for="price0">第 1 天：</label>
+                                <input type="number" id="price0" name="price" min="0" step="0.01" placeholder="美元價格">
+                            </div>
+                            <div class="input-row">
+                                <label for="price1">第 2 天：</label>
+                                <input type="number" id="price1" name="price" min="0" step="0.01" placeholder="美元價格">
+                            </div>
+                            <div class="input-row">
+                                <label for="price2">第 3 天：</label>
+                                <input type="number" id="price2" name="price" min="0" step="0.01" placeholder="美元價格">
+                            </div>
+                            <div class="input-row">
+                                <label for="price3">第 4 天：</label>
+                                <input type="number" id="price3" name="price" min="0" step="0.01" placeholder="美元價格">
+                            </div>
+                            <div class="input-row">
+                                <label for="price4">第 5 天：</label>
+                                <input type="number" id="price4" name="price" min="0" step="0.01" placeholder="美元價格">
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="apiData" name="api_data" value="">
+                    <input type="hidden" id="useApiImage" name="use_api_image" value="true">
+                    <input type="hidden" id="imageAnalysisData" name="image_analysis_data" value="">
+
+                    <button type="submit" class="submit-btn" id="submitBtn" onclick="return validateAndAnalyze()" disabled>
+                        開始AI綜合預測分析
                     </button>
-                    <span id="dataStatus" class="status-indicator" style="display: none;"></span>
-                </div>
-                <div id="loadingMessage" class="loading" style="display: none;">
-                    正在獲取數據，請稍候...
-                </div>
-                <div id="errorMessage" class="error" style="display: none;"></div>
+                </form>
             </div>
 
-            <!-- API 數據顯示區域 -->
-            <div id="dataDisplay" class="section data-display">
-                <h2>API 獲取的數據</h2>
-                
-                <!-- Fear & Greed Index 數據 -->
-                <h3>Fear & Greed Index (過去5天)</h3>
-                <table id="fgiTable" class="data-table">
-                    <thead>
-                        <tr>
-                            <th>日期</th>
-                            <th>指數值</th>
-                            <th>情緒分類</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-
-                <!-- Bitcoin 價格數據 -->
-                <h3>Bitcoin 價格 (過去5天)</h3>
-                <table id="priceTable" class="data-table">
-                    <thead>
-                        <tr>
-                            <th>日期</th>
-                            <th>價格 (USD)</th>
-                            <th>變化</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-
-                <!-- 5條K線圖顯示區域 -->
-                <div class="kline-chart-section">
-                    <h3>五天內K線圖</h3>
-                    <div class="chart-info">
-                    </div>
-                    <div class="chart-container">
-                        <img id="analysisChart" src="" alt="5條K線圖" style="display: none;">
-                    </div>
-                    <div id="imageAnalysisResult" class="image-analysis-result">
-                        <span id="imageResultText"></span>
-                    </div>
+            <div class="analysis-section" id="analysisSection">
+                <div class="analysis-content">
+                    <h2>AI 綜合預測分析</h2>
+                    <div id="analysisResults">
+                        </div>
                 </div>
             </div>
-
-            <!-- 手動輸入區域（備用，預設隱藏） -->
-            <div id="manualInputSection" class="section manual-input-section disabled" style="display: none;">
-                <h2>手動輸入數據（備用選項）</h2>
-                <p style="color: #666; font-size: 14px;">
-                    ⚠️ 僅在 API 數據獲取失敗時使用此選項
-                </p>
-                
-                <h3>過去 5 天的 Fear & Greed Index：</h3>
-                <div id="manualFgiInputs">
-                    <div class="input-row">
-                        <label for="fgi0">第 1 天：</label>
-                        <input type="number" id="fgi0" name="fgi" min="0" max="100" step="1" placeholder="0-100">
-                    </div>
-                    <div class="input-row">
-                        <label for="fgi1">第 2 天：</label>
-                        <input type="number" id="fgi1" name="fgi" min="0" max="100" step="1" placeholder="0-100">
-                    </div>
-                    <div class="input-row">
-                        <label for="fgi2">第 3 天：</label>
-                        <input type="number" id="fgi2" name="fgi" min="0" max="100" step="1" placeholder="0-100">
-                    </div>
-                    <div class="input-row">
-                        <label for="fgi3">第 4 天：</label>
-                        <input type="number" id="fgi3" name="fgi" min="0" max="100" step="1" placeholder="0-100">
-                    </div>
-                    <div class="input-row">
-                        <label for="fgi4">第 5 天：</label>
-                        <input type="number" id="fgi4" name="fgi" min="0" max="100" step="1" placeholder="0-100">
-                    </div>
-                </div>
-
-                <h3>過去 5 天的價格（最新放最前）：</h3>
-                <div id="manualPriceInputs">
-                    <div class="input-row">
-                        <label for="price0">第 1 天：</label>
-                        <input type="number" id="price0" name="price" min="0" step="0.01" placeholder="美元價格">
-                    </div>
-                    <div class="input-row">
-                        <label for="price1">第 2 天：</label>
-                        <input type="number" id="price1" name="price" min="0" step="0.01" placeholder="美元價格">
-                    </div>
-                    <div class="input-row">
-                        <label for="price2">第 3 天：</label>
-                        <input type="number" id="price2" name="price" min="0" step="0.01" placeholder="美元價格">
-                    </div>
-                    <div class="input-row">
-                        <label for="price3">第 4 天：</label>
-                        <input type="number" id="price3" name="price" min="0" step="0.01" placeholder="美元價格">
-                    </div>
-                    <div class="input-row">
-                        <label for="price4">第 5 天：</label>
-                        <input type="number" id="price4" name="price" min="0" step="0.01" placeholder="美元價格">
-                    </div>
-                </div>
-            </div>
-
-            <!-- 隱藏的表單欄位，用於傳遞 API 數據 -->
-            <input type="hidden" id="apiData" name="api_data" value="">
-            <input type="hidden" id="useApiImage" name="use_api_image" value="true">
-            <input type="hidden" id="imageAnalysisData" name="image_analysis_data" value="">
-
-            <!-- 提交按鈕 -->
-            <button type="submit" class="submit-btn" id="submitBtn" onclick="return validateAndAnalyze()" disabled>
-                開始AI綜合預測分析
-            </button>
-        </form>
+        </div>
     </div>
 
     <script>
@@ -632,20 +720,54 @@
                 
                 if (response.ok) {
                     const result = await response.text();
-                    // 將結果顯示在新頁面
-                    document.open();
-                    document.write(result);
-                    document.close();
+                    
+                    // 解析返回的 HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(result, 'text/html');
+                    
+                    // 獲取分析結果
+                    const predictionResults = doc.querySelector('.prediction-results');
+                    const modelPrediction = doc.querySelector('.model-prediction');
+
+                    // 顯示分析區域
+                    const analysisSection = document.getElementById('analysisSection');
+                    const analysisResults = document.getElementById('analysisResults');
+                    
+                    // 清空之前的結果
+                    analysisResults.innerHTML = '';
+                    
+                    // 依序添加結果並設置動畫延遲
+                    if (predictionResults) {
+                        predictionResults.style.animationDelay = '0s';
+                        analysisResults.appendChild(predictionResults);
+                    }
+                    
+                    if (modelPrediction) {
+                        modelPrediction.style.animationDelay = '0.3s';
+                        analysisResults.appendChild(modelPrediction);
+                    }
+
+                    // 顯示分析區域
+                    analysisSection.style.display = 'block';
+                    
+                    // 重置提交按鈕
+                    submitBtn.textContent = '重新分析';
+                    submitBtn.disabled = false;
+
                 } else {
                     throw new Error('伺服器回應錯誤');
                 }
-                
-                return false; // 防止表單的預設提交行為
+
             } catch (error) {
                 console.error('提交錯誤:', error);
                 alert('提交過程中發生錯誤: ' + error.message);
-                return false;
+                
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.textContent = '開始AI綜合預測分析';
+                submitBtn.disabled = false;
             }
+
+            return false;
         }
 
         // UI 工具函數
