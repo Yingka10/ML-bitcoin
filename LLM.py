@@ -251,6 +251,7 @@ def predict_next_price(fgi_values, price_values):
     return prediction[0],
 
 def predict_next_price_arima(fgi_values, price_values, order=(1,1,0)):
+    """使用 ARIMA 模型預測下一天價格"""
     if len(fgi_values) != 5 or len(price_values) != 5:
         raise ValueError("請提供5天的 fgi 和 price 資料")
 
@@ -262,11 +263,25 @@ def predict_next_price_arima(fgi_values, price_values, order=(1,1,0)):
     model = ARIMA(endog=endog_train, exog=exog_train, order=order)
     model_fit = model.fit()
     
+    # 計算模型評估指標
+    aic = model_fit.aic
+    bic = model_fit.bic
+    mse = np.mean((endog_train - model_fit.fittedvalues) ** 2)
+    rmse = np.sqrt(mse)
+    
     # 用今天的FGI預測下一天價格
-    next_exog = np.array([fgi_values[-1]]).reshape(1, -1)  # 預測時用最新一天的FGI
+    next_exog = np.array([fgi_values[-1]]).reshape(1, -1)
     pred = model_fit.forecast(steps=1, exog=next_exog)[0]
     
-    return pred
+    return {
+        'prediction': pred,
+        'metrics': {
+            'AIC': aic,
+            'BIC': bic,
+            'RMSE': rmse,
+            'order': order
+        }
+    }
 
 def predict_image_class(image_path):
     img = image.load_img(image_path, target_size=(224,224))
@@ -275,31 +290,47 @@ def predict_image_class(image_path):
     prediction = keras_model.predict(img_tensor)
     return int(prediction[0][0] > 0.5)
 
-# Gemini 分析函數
-def generate_llm_analysis(fgi_values, prices, image_class, predicted_price, image_prob, arima_price):
+def generate_llm_analysis(fgi_values, prices, image_class, image_prob, regression_price, arima_results):
     """生成LLM綜合分析"""
     regression_confidence = 0.9921031529442089 
+    
+    # 計算價格趨勢指標
+    price_change = ((prices[0] - prices[-1]) / prices[-1]) * 100
+    price_trend = "上漲" if price_change > 0 else "下跌"
+    
+    # 計算 FGI 趨勢
+    fgi_change = fgi_values[0] - fgi_values[-1]
+    fgi_trend = "增加" if fgi_change > 0 else "減少"
+    
     user_input = f"""
     請根據以下市場數據進行整合分析：
 
     1.  **市場情緒指標**：
-        *   過去5天 FGI 趨勢：{fgi_values}
-    2.  **價格波動**：
-        *   過去5天價格波動：{prices}
-    3.  **模型預測**：
-        *   Reggression模型預測價格：${predicted_price:.2f}
-        *   Reggression模型信心指數：{regression_confidence:.4f} (R² Score)
-        *   ARIMA模型預測價格：${arima_price:.2f}
-    4.  **圖像分析**：
-        *   圖像趨勢判斷：{'上漲' if image_class == 1 else '下跌'}
-        *   圖像判斷機率：{image_prob:.2f}
+        *   最新 FGI 值：{fgi_values[0]}
+        *   FGI 5天趨勢：{fgi_trend}（變化：{abs(fgi_change)}點）
+        
+    2.  **市場趨勢概要**：
+        *   近5天整體趨勢：{price_trend}
+        *   價格變化幅度：{price_change:.2f}%
+        
+    3.  **預測模型結果**：
+        *   回歸模型預測價格：${regression_price:.2f}
+        *   回歸模型信心指數：{regression_confidence:.4f} (R² Score)
+        *   ARIMA模型預測價格：${arima_results['prediction']:.2f}
+        *   ARIMA模型評估：
+            - AIC: {arima_results['metrics']['AIC']:.2f}
+            - RMSE: {arima_results['metrics']['RMSE']:.2f}
+            
+    4.  **技術圖形分析**：
+        *   K線趨勢判斷：{'上漲' if image_class == 1 else '下跌'}
+        *   圖形判斷信心度：{image_prob:.2%}
 
-    請綜合評估：
+    請進行綜合分析：
     
     1.  市場情緒與技術面分析
     2.  多個模型預測價格的差異分析
     3.  風險等級評估（1-5級）
-    4.  操作建議（買入/持有/觀望）
+    4.  明確的操作建議（買入/持有/觀望/賣出）
 
     請以條列式呈現分析結果，並說明各項指標的影響。
     """
@@ -444,21 +475,29 @@ def index():
             predicted_price, = predict_next_price(fgi_values, prices)
             print("REGRESSION 預測價格:", predicted_price)
 
-            arima_predicted_price = predict_next_price_arima(fgi_values, prices)
-            print("ARIMA 預測價格:", arima_predicted_price) 
+            arima_results = predict_next_price_arima(fgi_values, prices)
+            print("ARIMA 預測價格:", arima_results['prediction'])
+            print("ARIMA 模型評估指標:", arima_results['metrics'])
             
             # 生成分析結果
-            analysis = generate_llm_analysis(fgi_values, prices, image_class, predicted_price, image_prob, arima_predicted_price)
-
-            print("分析完成:", analysis)
+            analysis = generate_llm_analysis(
+                fgi_values, 
+                prices, 
+                image_class,
+                image_prob,
+                predicted_price, 
+                arima_results
+            )
 
             # 返回所有結果給模板
-            return render_template('result.html', 
+            return render_template(
+                'result.html', 
                 prediction=analysis,
                 image_trend='上漲' if image_class == 1 else '下跌',
                 image_prob=image_prob,
                 regression_price=predicted_price,
-                arima_price=arima_predicted_price
+                arima_price=arima_results['prediction'],
+                arima_metrics=arima_results['metrics']
             )
             
         except Exception as e:
