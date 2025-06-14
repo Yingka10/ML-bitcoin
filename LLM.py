@@ -201,7 +201,6 @@ def get_bitcoin_5day_ohlc_chart(end_date=None):
             raise ValueError(f"數據不足，只有 {len(daily_df)} 條K線")
 
         # 生成圖表
-        plt.style.use('dark_background')
         fig, ax = plt.subplots(figsize=(10, 6))
         
         mpf.plot(
@@ -294,49 +293,38 @@ def generate_llm_analysis(fgi_values, prices, image_class, image_prob, regressio
     """生成LLM綜合分析"""
     regression_confidence = 0.9921031529442089 
     
-    # 計算價格趨勢指標
-    price_change = ((prices[0] - prices[-1]) / prices[-1]) * 100
-    price_trend = "上漲" if price_change > 0 else "下跌"
-    
-    # 計算 FGI 趨勢
-    fgi_change = fgi_values[0] - fgi_values[-1]
-    fgi_trend = "增加" if fgi_change > 0 else "減少"
     
     user_input = f"""
     請根據以下市場數據進行整合分析：
 
-    1.  **市場情緒指標**：
-        *   最新 FGI 值：{fgi_values[0]}
-        *   FGI 5天趨勢：{fgi_trend}（變化：{abs(fgi_change)}點）
+    1. 原始數據序列 (從最新到最舊):
+        過去5天 FGI 指數: {[fgi_values[0], fgi_values[1], fgi_values[2], fgi_values[3], fgi_values[4]]}
+        過去5天收盤價 (USD): {[prices[0], prices[1], prices[2], prices[3], prices[4]]}
         
-    2.  **市場趨勢概要**：
-        *   近5天整體趨勢：{price_trend}
-        *   價格變化幅度：{price_change:.2f}%
-        
-    3.  **預測模型結果**：
-        *   回歸模型預測價格：${regression_price:.2f}
-        *   回歸模型信心指數：{regression_confidence:.4f} (R² Score)
-        *   ARIMA模型預測價格：${arima_results['prediction']:.2f}
-        *   ARIMA模型評估：
-            - AIC: {arima_results['metrics']['AIC']:.2f}
-            - RMSE: {arima_results['metrics']['RMSE']:.2f}
+    2. 預測模型結果：
+        回歸模型預測價格：${regression_price:.2f}
+        回歸模型信心指數：{regression_confidence:.4f} (R² Score)
+        ARIMA模型預測價格：${arima_results['prediction']:.2f}
+        ARIMA模型評估：
+        - AIC: {arima_results['metrics']['AIC']:.2f}
+        - RMSE: {arima_results['metrics']['RMSE']:.2f}
             
-    4.  **技術圖形分析**：
-        *   K線趨勢判斷：{'上漲' if image_class == 1 else '下跌'}
-        *   圖形判斷信心度：{image_prob:.2%}
+    3.  圖形趨勢預測結果：
+        K線趨勢判斷：{'上漲' if image_class == 1 else '下跌'}
+        圖形判斷信心度：{image_prob:.2%}
 
     請進行綜合分析：
     
-    1.  市場情緒與技術面分析
-    2.  多個模型預測價格的差異分析
-    3.  風險等級評估（1-5級）
-    4.  明確的操作建議（買入/持有/觀望/賣出）
+    1.  市場現況總結： 結合FGI和價格序列的變化，描述當前的市場氣氛和價格動能。
+    2.  多個模型預測價格的差異分析：比較三種模型（回歸、ARIMA、Keras）的預測結果
+    3.  風險等級評估：從「極低、低、中等、高、極高」中選擇一個風險等級，並簡要說明理由
+    4.  具體操作建議（買入/持有/觀望/賣出）：基於你的綜合分析，提出明確的操作建議
 
-    請以條列式列點呈現分析結果，並說明各項指標的影響。
+    請以數字編號條列分析重點，最後要有總結分析。
     """
 
     role_description = """
-    你是市場趨勢分析師，根據 Fear & Greed Index、價格預測、圖像判斷與模型信心指數，請輸出合理且簡潔的結論。
+    你是市場趨勢分析師，根據 Fear & Greed Index、價格預測、圖像判斷與模型預測結果，請輸出合理且簡潔的結論。
     請不要使用任何 Markdown 語法（如 *、-、#、** 等），請用純文字條列理由，每一點之間需換行。
     """
 
