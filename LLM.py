@@ -20,6 +20,7 @@ import mplfinance as mpf
 import io
 import base64
 import tempfile
+from statsmodels.tsa.arima.model import ARIMA
 
 # 初始化 Flask 應用
 app = Flask(__name__)
@@ -249,6 +250,24 @@ def predict_next_price(fgi_values, price_values):
     prediction = sklearn_model.predict(input_data)
     return prediction[0],
 
+def predict_next_price_arima(fgi_values, price_values, order=(1,1,0)):
+    if len(fgi_values) != 5 or len(price_values) != 5:
+        raise ValueError("請提供5天的 fgi 和 price 資料")
+
+    # exog要是2D array，shape=(5,1)
+    exog_train = np.array(fgi_values).reshape(-1, 1)
+    endog_train = np.array(price_values)
+    
+    # 建立並擬合ARIMA模型
+    model = ARIMA(endog=endog_train, exog=exog_train, order=order)
+    model_fit = model.fit()
+    
+    # 用今天的FGI預測下一天價格
+    next_exog = np.array([fgi_values[-1]]).reshape(1, -1)  # 預測時用最新一天的FGI
+    pred = model_fit.forecast(steps=1, exog=next_exog)[0]
+    
+    return pred
+
 def predict_image_class(image_path):
     img = image.load_img(image_path, target_size=(224,224))
     img_tensor = image.img_to_array(img)
@@ -257,9 +276,9 @@ def predict_image_class(image_path):
     return int(prediction[0][0] > 0.5)
 
 # Gemini 分析函數
-def generate_llm_analysis(fgi_values, prices, image_class, predicted_price, image_prob):
+def generate_llm_analysis(fgi_values, prices, image_class, predicted_price, image_prob, arima_price):
     """生成LLM綜合分析"""
-    confidence_sklearn = 0.9921031529442089
+    regression_confidence = 0.9921031529442089 
     user_input = f"""
     請根據以下市場數據進行整合分析：
 
@@ -268,19 +287,19 @@ def generate_llm_analysis(fgi_values, prices, image_class, predicted_price, imag
     2.  **價格波動**：
         *   過去5天價格波動：{prices}
     3.  **模型預測**：
-        *   預測明日價格：${predicted_price:.2f}
-        *   模型信心指數：{confidence_sklearn:.2f}
+        *   Reggression模型預測價格：${predicted_price:.2f}
+        *   Reggression模型信心指數：{regression_confidence:.4f} (R² Score)
+        *   ARIMA模型預測價格：${arima_price:.2f}
     4.  **圖像分析**：
         *   圖像趨勢判斷：{'上漲' if image_class == 1 else '下跌'}
         *   圖像判斷機率：{image_prob:.2f}
 
     請綜合評估：
     
-    1.  市場情緒
-    2.  技術面
-    3.  基本面
-    4.  風險等級評估（1-5級）
-    5.  操作建議（買入/持有/觀望）
+    1.  市場情緒與技術面分析
+    2.  多個模型預測價格的差異分析
+    3.  風險等級評估（1-5級）
+    4.  操作建議（買入/持有/觀望）
 
     請以條列式呈現分析結果，並說明各項指標的影響。
     """
@@ -411,7 +430,7 @@ def index():
                     img_array = np.expand_dims(img_array, axis=0) / 255.0  # 添加 batch 維度
                     image_prob = float(keras_model.predict(img_array, verbose=0)[0][0])  # 使用 float() 確保輸出是純量
                     print("圖像預測機率:", image_prob)
-                    print("圖像分類結果:", image_class)
+                    print("圖像預測趨勢:",'上漲' if image_class == 1 else '下跌')
 
             finally:
                 # 確保在完成後刪除臨時檔案
@@ -423,16 +442,24 @@ def index():
             
             # 進行價格預測
             predicted_price, = predict_next_price(fgi_values, prices)
-            print("預測價格:", predicted_price)
+            print("REGRESSION 預測價格:", predicted_price)
+
+            arima_predicted_price = predict_next_price_arima(fgi_values, prices)
+            print("ARIMA 預測價格:", arima_predicted_price) 
             
             # 生成分析結果
-            analysis = generate_llm_analysis(fgi_values, prices, image_class, predicted_price, image_prob)
+            analysis = generate_llm_analysis(fgi_values, prices, image_class, predicted_price, image_prob, arima_predicted_price)
 
             print("分析完成:", analysis)
-            
-            # 明確指定返回類型和編碼
 
-            return render_template('result.html', prediction=analysis)
+            # 返回所有結果給模板
+            return render_template('result.html', 
+                prediction=analysis,
+                image_trend='上漲' if image_class == 1 else '下跌',
+                image_prob=image_prob,
+                regression_price=predicted_price,
+                arima_price=arima_predicted_price
+            )
             
         except Exception as e:
             error_msg = f"分析過程中發生錯誤: {str(e)}"

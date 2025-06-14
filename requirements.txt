@@ -16,3 +16,4 @@ requests
 pycoingecko
 fear-and-greed-crypto
 mplfinance
+statsmodels

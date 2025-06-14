@@ -37,6 +37,56 @@
             text-decoration: none;
             border-radius: 5px;
         }
+
+        .prediction-results {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .prediction-item {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+        }
+        
+        .prediction-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .prediction-value {
+            color: #e74c3c;
+            font-size: 1.1em;
+        }
+
+        .model-prediction {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .model-prediction h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .model-prediction pre {
+            font-size: 1.1em;  /* 調整為與 prediction-value 相同的大小 */
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-family: Arial, sans-serif;  /* 使用與其他文字相同的字體 */
+            color: #333;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -44,11 +94,27 @@
         <h1>市場趨勢分析結果</h1>
         <div class="result-content">
             {% if prediction %}
-                <div class="result-header">
-                </div>        
+                <div class="prediction-results">
+                    <h2>模型預測結果</h2>
+                    <div class="prediction-item">
+                        <span class="prediction-label">圖像分析趨勢：</span>
+                        <span class="prediction-value">{{ image_trend }}</span>
+                        <span class="prediction-confidence">(機率：{{ "%.2f"|format(image_prob * 100) }}%)</span>
+                    </div>
+                    <div class="prediction-item">
+                        <span class="prediction-label">Reggression模型預測價格：</span>
+                        <span class="prediction-value">${{ "%.2f"|format(regression_price) }}</span>
+                        <span class="prediction-confidence">(R² Score: 0.9921)</span>
+                    </div>
+                    <div class="prediction-item">
+                        <span class="prediction-label">ARIMA模型預測價格：</span>
+                        <span class="prediction-value">${{ "%.2f"|format(arima_price) }}</span>
+                    </div>
+                </div>
+                
                 <div class="model-prediction">
-                    <h1>Gemini 分析結果</h1>
-                    <p>{{ prediction }}</p>
+                    <h2>Gemini 分析結果</h2>
+                    <pre>{{ prediction }}</pre>
                 </div>
                 <a href="{{ url_for('index') }}" class="home-btn">返回首頁</a>
             {% else %}
