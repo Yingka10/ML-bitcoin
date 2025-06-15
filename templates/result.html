@@ -27,3 +27,20 @@
     <h2>Gemini 分析結果</h2>
     <pre>{{ prediction }}</pre>
 </div>
+
+<div id="initial-system-prompt" style="display: none;">{{ role_description }}</div>
+<div id="initial-user-prompt" style="display: none;">{{ user_input }}</div>
+<div id="initial-ai-response" style="display: none;">{{ prediction }}</div>
+
+<div class="chat-container">
+    <h3 style="text-align: center; color: #333; margin-bottom: 15px;">與 Gemini 繼續對話</h3>
+    <div class="chat-messages" id="chat-messages">
+        </div>
+    <form class="chat-form" id="chat-form">
+        <input type="text" id="chat-input" placeholder="基於以上分析提出您的問題..." autocomplete="off" required>
+        <button type="submit" id="chat-submit-btn">發送</button>
+    </form>
+    <div id="chat-loading" style="display: none; text-align: center; margin-top: 10px; color: #555;">
+        Gemini 正在思考中...
+    </div>
+</div>

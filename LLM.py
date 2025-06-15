@@ -34,7 +34,7 @@ config.read("config.ini")
 
 # 初始化 LLM
 llm_gemini = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
+    model="gemini-1.5-flash",
     google_api_key=config["Gemini"]["API_KEY"]
 )
 # 初始化 CoinGecko API
@@ -335,7 +335,8 @@ def generate_llm_analysis(fgi_values, prices, image_class, image_prob, regressio
     ]
 
     response = llm_gemini.invoke(messages)
-    return response.content
+    # 返回所有內容，以便建立對話歷史
+    return response.content, user_input, role_description
 
 @app.route('/api/combined-data/5')
 def api_combined_data():
@@ -468,8 +469,8 @@ def index():
             print("ARIMA 預測價格:", arima_results['prediction'])
             print("ARIMA 模型評估指標:", arima_results['metrics'])
             
-            # 生成分析結果
-            analysis = generate_llm_analysis(
+            # 生成分析結果，並獲取對話歷史所需元件
+            analysis, user_input, role_description = generate_llm_analysis(
                 fgi_values, 
                 prices, 
                 image_class,
@@ -478,7 +479,7 @@ def index():
                 arima_results
             )
 
-            # 返回所有結果給模板
+            # 返回所有結果給模板，包括用於對話的初始上下文
             return render_template(
                 'result.html', 
                 prediction=analysis,
@@ -486,7 +487,9 @@ def index():
                 image_prob=image_prob,
                 regression_price=predicted_price,
                 arima_price=arima_results['prediction'],
-                arima_metrics=arima_results['metrics']
+                arima_metrics=arima_results['metrics'],
+                user_input=user_input, # 傳遞初始用戶提問
+                role_description=role_description # 傳遞系統角色設定
             )
             
         except Exception as e:
@@ -497,6 +500,34 @@ def index():
             return render_template('result.html', prediction=error_msg)
     
     return render_template('index.html')
+
+# 【新增】處理聊天請求的 API 端點
+@app.route('/api/chat', methods=['POST'])
+def chat_with_gemini():
+    try:
+        data = request.get_json()
+        messages = data.get('messages') # 接收包含完整歷史的對話列表
+
+        if not messages:
+            return jsonify({'success': False, 'error': '未收到對話歷史'}), 400
+
+        # 直接將帶有歷史紀錄的 messages 傳遞給模型
+        response = llm_gemini.invoke(messages)
+        
+        return jsonify({
+            'success': True, 
+            'reply': response.content
+        })
+
+    except Exception as e:
+        print(f"Chat API 錯誤: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']

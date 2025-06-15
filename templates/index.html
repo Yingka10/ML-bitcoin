@@ -372,6 +372,94 @@
             border-radius: 8px;
             color: #333;
         }
+
+        /* 【新增】聊天室相關樣式 */
+        .chat-container {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #007bff;
+        }
+
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            border-radius: 6px;
+        }
+        
+        .chat-message {
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 85%;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .chat-message.user {
+            background-color: #e3f2fd;
+            margin-left: auto;
+            text-align: left;
+        }
+
+        .chat-message.ai {
+            background-color: #f1f0f0;
+            margin-right: auto;
+            text-align: left;
+            white-space: pre-wrap; /* 讓 AI 回應的換行生效 */
+        }
+        
+        .chat-message .sender {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: #0056b3;
+        }
+        .chat-message.ai .sender {
+            color: #333;
+        }
+
+        .chat-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        #chat-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        #chat-input:focus {
+             border-color: #007bff;
+             outline: none;
+        }
+
+        #chat-submit-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        #chat-submit-btn:hover {
+            background-color: #218838;
+        }
+        #chat-submit-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
     </style>
 </head>
 <body>
@@ -379,7 +467,6 @@
         <div class="main-container">
             <div class="data-section">
                 <h1>Bitcoin 市場趨勢預測系統</h1>
-                
                 <form id="predictionForm" method="post" action="{{ url_for('index') }}" enctype="multipart/form-data">
                     <div class="section">
                         <h2>選擇分析日期</h2>
@@ -396,10 +483,8 @@
                         </div>
                         <div id="errorMessage" class="error" style="display: none;"></div>
                     </div>
-
                     <div id="dataDisplay" class="section data-display">
                         <h2>API 獲取的數據</h2>
-                        
                         <h3>Fear & Greed Index (過去5天)</h3>
                         <table id="fgiTable" class="data-table">
                             <thead>
@@ -411,7 +496,6 @@
                             </thead>
                             <tbody></tbody>
                         </table>
-
                         <h3>Bitcoin 價格 (過去5天)</h3>
                         <table id="priceTable" class="data-table">
                             <thead>
@@ -423,7 +507,6 @@
                             </thead>
                             <tbody></tbody>
                         </table>
-
                         <div class="kline-chart-section">
                             <h3>五天內K線圖</h3>
                             <div class="chart-info">
@@ -436,66 +519,21 @@
                             </div>
                         </div>
                     </div>
-
                     <div id="manualInputSection" class="section manual-input-section disabled" style="display: none;">
                         <h2>手動輸入數據（備用選項）</h2>
                         <p style="color: #666; font-size: 14px;">
                             ⚠️ 僅在 API 數據獲取失敗時使用此選項
                         </p>
-                        
                         <h3>過去 5 天的 Fear & Greed Index：</h3>
                         <div id="manualFgiInputs">
-                            <div class="input-row">
-                                <label for="fgi0">第 1 天：</label>
-                                <input type="number" id="fgi0" name="fgi" min="0" max="100" step="1" placeholder="0-100">
                             </div>
-                            <div class="input-row">
-                                <label for="fgi1">第 2 天：</label>
-                                <input type="number" id="fgi1" name="fgi" min="0" max="100" step="1" placeholder="0-100">
-                            </div>
-                            <div class="input-row">
-                                <label for="fgi2">第 3 天：</label>
-                                <input type="number" id="fgi2" name="fgi" min="0" max="100" step="1" placeholder="0-100">
-                            </div>
-                            <div class="input-row">
-                                <label for="fgi3">第 4 天：</label>
-                                <input type="number" id="fgi3" name="fgi" min="0" max="100" step="1" placeholder="0-100">
-                            </div>
-                            <div class="input-row">
-                                <label for="fgi4">第 5 天：</label>
-                                <input type="number" id="fgi4" name="fgi" min="0" max="100" step="1" placeholder="0-100">
-                            </div>
-                        </div>
-
                         <h3>過去 5 天的價格（最新放最前）：</h3>
                         <div id="manualPriceInputs">
-                            <div class="input-row">
-                                <label for="price0">第 1 天：</label>
-                                <input type="number" id="price0" name="price" min="0" step="0.01" placeholder="美元價格">
-                            </div>
-                            <div class="input-row">
-                                <label for="price1">第 2 天：</label>
-                                <input type="number" id="price1" name="price" min="0" step="0.01" placeholder="美元價格">
-                            </div>
-                            <div class="input-row">
-                                <label for="price2">第 3 天：</label>
-                                <input type="number" id="price2" name="price" min="0" step="0.01" placeholder="美元價格">
-                            </div>
-                            <div class="input-row">
-                                <label for="price3">第 4 天：</label>
-                                <input type="number" id="price3" name="price" min="0" step="0.01" placeholder="美元價格">
-                            </div>
-                            <div class="input-row">
-                                <label for="price4">第 5 天：</label>
-                                <input type="number" id="price4" name="price" min="0" step="0.01" placeholder="美元價格">
-                            </div>
-                        </div>
+                           </div>
                     </div>
-
                     <input type="hidden" id="apiData" name="api_data" value="">
                     <input type="hidden" id="useApiImage" name="use_api_image" value="true">
                     <input type="hidden" id="imageAnalysisData" name="image_analysis_data" value="">
-
                     <button type="submit" class="submit-btn" id="submitBtn" onclick="return validateAndAnalyze()" disabled>
                         開始AI綜合預測分析
                     </button>
@@ -507,6 +545,7 @@
                     <h2>AI 綜合預測分析</h2>
                     <div id="analysisResults">
                         </div>
+                    <div id="chatContainerWrapper"></div>
                 </div>
             </div>
         </div>
@@ -521,6 +560,9 @@
         // 儲存獲取的 API 數據
         let apiData = null;
         let imageAnalysisResult = null;
+
+        // 【新增】用於儲存完整對話歷史的全局變量
+        let conversationHistory = [];
 
         async function fetchDataForDate() {
             const dateInput = document.getElementById('analysisDate');
@@ -565,7 +607,7 @@
             showLoading(false);
         }
 
-        // 顯示獲取的數據
+        // 顯示獲取的數據 (此函數不變)
         function displayData(data) {
             console.log('開始顯示數據:', data);
             
@@ -577,8 +619,6 @@
                 const row = fgiTableBody.insertRow();
                 row.insertCell(0).textContent = item.date;
                 row.insertCell(1).textContent = item.value;
-                
-                // 情緒分類加上顏色
                 const classificationCell = row.insertCell(2);
                 classificationCell.textContent = item.classification;
                 if (item.classification.toLowerCase().includes('greed')) {
@@ -600,8 +640,6 @@
                 const row = priceTableBody.insertRow();
                 row.insertCell(0).textContent = item.date;
                 row.insertCell(1).textContent = '$' + item.price.toLocaleString();
-                
-                // 計算價格變化
                 const changeCell = row.insertCell(2);
                 if (index < data.price_data.length - 1) {
                     const currentPrice = item.price;
@@ -623,7 +661,6 @@
                 const fgiInput = document.getElementById(`fgi${index}`);
                 if (fgiInput) fgiInput.value = item.value;
             });
-
             data.price_data.forEach((item, index) => {
                 const priceInput = document.getElementById(`price${index}`);
                 if (priceInput) priceInput.value = item.price;
@@ -632,51 +669,35 @@
             showDataDisplay();
         }
 
-        // 新增圖像分析函數
+        // 圖像分析函數 (此函數不變)
         async function performImageAnalysis(chartBase64) {
-            try {
+             try {
                 console.log('開始圖像分析...');
-                
-                // 顯示分析圖表
                 const analysisChart = document.getElementById('analysisChart');
                 analysisChart.src = 'data:image/png;base64,' + chartBase64;
                 analysisChart.style.display = 'block';
-                
-                // 調用後端圖像分析API
                 const analysisResponse = await fetch('/api/analyze-chart', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        chart_data: chartBase64
-                    })
+                    headers: { 'Content-Type': 'application/json', },
+                    body: JSON.stringify({ chart_data: chartBase64 })
                 });
-                
                 const analysisResult = await analysisResponse.json();
                 console.log('圖像分析結果:', analysisResult);
-                
                 if (analysisResult.success) {
                     imageAnalysisResult = analysisResult;
                     const prediction = analysisResult.prediction;
                     const resultText = prediction === 1 ? '📈 上漲' : '📉 下跌';
-                    
-                    document.getElementById('imageResultText').textContent = 
-                        `Keras 圖像趨勢預測: ${resultText}`;
-                    
+                    document.getElementById('imageResultText').textContent = `Keras 圖像趨勢預測: ${resultText}`;
                     const resultDiv = document.getElementById('imageAnalysisResult');
                     resultDiv.className = `image-analysis-result ${prediction === 1 ? 'prediction-up' : 'prediction-down'}`;
                     resultDiv.style.display = 'block';
-                    
                 } else {
                     throw new Error(analysisResult.error || '分析失敗');
                 }
-                
             } catch (error) {
                 console.error('圖像分析失敗:', error);
                 const chartInfo = document.querySelector('.chart-info');
                 chartInfo.innerHTML = '<strong>❌ 分析失敗：</strong>' + error.message;
-                
                 const resultDiv = document.getElementById('imageAnalysisResult');
                 resultDiv.className = 'image-analysis-result error';
                 resultDiv.style.display = 'block';
@@ -684,32 +705,22 @@
             }
         }
 
-        // 表單驗證和提交
+        // 【大幅修改】表單驗證、提交、並處理回傳結果
         async function validateAndAnalyze() {
             console.log("========= validateAndAnalyze Fired =========");
-            console.log("Current apiData:", apiData);
-            
             if (!apiData) {
                 alert('請先獲取數據');
                 return false;
             }
-            
-            console.log("apiData.chart exists:", !!apiData.chart);
-            console.log("apiData.chart content:", apiData.chart.substring(0, 50) + "...");
 
+            const submitBtn = document.getElementById('submitBtn');
             try {
-                // 設定 API 數據並提交
                 document.getElementById('apiData').value = JSON.stringify(apiData);
                 document.getElementById('useApiImage').value = 'true';
                 
-                // 顯示提交狀態
-                const submitBtn = document.getElementById('submitBtn');
                 submitBtn.textContent = '🔄 正在進行綜合分析...';
                 submitBtn.disabled = true;
                 
-                console.log("Validation PASSED. Preparing to submit.");
-                
-                // 使用 fetch 提交表單
                 const form = document.getElementById('predictionForm');
                 const formData = new FormData(form);
                 
@@ -719,38 +730,49 @@
                 });
                 
                 if (response.ok) {
-                    const result = await response.text();
-                    
-                    // 解析返回的 HTML
+                    const resultHtml = await response.text();
                     const parser = new DOMParser();
-                    const doc = parser.parseFromString(result, 'text/html');
+                    const doc = parser.parseFromString(resultHtml, 'text/html');
                     
-                    // 獲取分析結果
+                    // 提取分析結果和聊天室UI
                     const predictionResults = doc.querySelector('.prediction-results');
                     const modelPrediction = doc.querySelector('.model-prediction');
+                    const chatContainer = doc.querySelector('.chat-container');
 
-                    // 顯示分析區域
-                    const analysisSection = document.getElementById('analysisSection');
-                    const analysisResults = document.getElementById('analysisResults');
+                    // 提取用於初始化對話歷史的內容
+                    const initialSystemPrompt = doc.getElementById('initial-system-prompt')?.textContent;
+                    const initialUserPrompt = doc.getElementById('initial-user-prompt')?.textContent;
+                    const initialAiResponse = doc.getElementById('initial-ai-response')?.textContent;
+
+                    // 將結果注入頁面
+                    const analysisResultsDiv = document.getElementById('analysisResults');
+                    analysisResultsDiv.innerHTML = '';
+                    if (predictionResults) analysisResultsDiv.appendChild(predictionResults);
+                    if (modelPrediction) analysisResultsDiv.appendChild(modelPrediction);
                     
-                    // 清空之前的結果
-                    analysisResults.innerHTML = '';
-                    
-                    // 依序添加結果並設置動畫延遲
-                    if (predictionResults) {
-                        predictionResults.style.animationDelay = '0s';
-                        analysisResults.appendChild(predictionResults);
-                    }
-                    
-                    if (modelPrediction) {
-                        modelPrediction.style.animationDelay = '0.3s';
-                        analysisResults.appendChild(modelPrediction);
+                    // 將聊天室注入頁面
+                    const chatWrapper = document.getElementById('chatContainerWrapper');
+                    chatWrapper.innerHTML = ''; 
+                    if (chatContainer) {
+                        chatWrapper.appendChild(chatContainer);
+                        
+                        // 初始化對話歷史 (格式為 [["role", "content"], ...])
+                        conversationHistory = [];
+                        if (initialSystemPrompt) conversationHistory.push(["system", initialSystemPrompt]);
+                        if (initialUserPrompt) conversationHistory.push(["human", initialUserPrompt]);
+                        if (initialAiResponse) conversationHistory.push(["ai", initialAiResponse]);
+                        
+                        console.log("Chat history initialized:", conversationHistory);
+
+                        // 為新的聊天表單綁定提交事件
+                        const chatForm = document.getElementById('chat-form');
+                        if (chatForm) {
+                            chatForm.addEventListener('submit', handleChatSubmit);
+                        }
                     }
 
-                    // 顯示分析區域
-                    analysisSection.style.display = 'block';
-                    
-                    // 重置提交按鈕
+                    // 顯示分析區塊
+                    document.getElementById('analysisSection').style.display = 'block';
                     submitBtn.textContent = '重新分析';
                     submitBtn.disabled = false;
 
@@ -761,16 +783,89 @@
             } catch (error) {
                 console.error('提交錯誤:', error);
                 alert('提交過程中發生錯誤: ' + error.message);
-                
-                const submitBtn = document.getElementById('submitBtn');
                 submitBtn.textContent = '開始AI綜合預測分析';
                 submitBtn.disabled = false;
             }
-
             return false;
         }
 
-        // UI 工具函數
+        // 【新增】處理聊天訊息提交的函數
+        async function handleChatSubmit(event) {
+            event.preventDefault();
+            
+            const chatInput = document.getElementById('chat-input');
+            const chatLoading = document.getElementById('chat-loading');
+            const chatSubmitBtn = document.getElementById('chat-submit-btn');
+
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+
+            // 在聊天框顯示用戶訊息
+            addMessageToChatbox(userMessage, 'user');
+            
+            // 將用戶訊息加入對話歷史
+            conversationHistory.push(["human", userMessage]);
+            
+            // 清空輸入框並顯示載入中狀態
+            chatInput.value = '';
+            chatInput.disabled = true;
+            chatSubmitBtn.disabled = true;
+            chatLoading.style.display = 'block';
+
+            try {
+                // 發送包含完整歷史的請求到後端
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: conversationHistory })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const aiReply = data.reply;
+                    // 將 AI 回應加入歷史
+                    conversationHistory.push(["ai", aiReply]);
+                    // 在聊天框顯示 AI 回應
+                    addMessageToChatbox(aiReply, 'ai');
+                } else {
+                    addMessageToChatbox(`錯誤: ${data.error || '無法獲取回應'}`, 'ai', true);
+                }
+
+            } catch (error) {
+                addMessageToChatbox(`網路錯誤: ${error.message}`, 'ai', true);
+            } finally {
+                // 恢復輸入框狀態
+                chatInput.disabled = false;
+                chatSubmitBtn.disabled = false;
+                chatLoading.style.display = 'none';
+                chatInput.focus();
+            }
+        }
+
+        // 【新增】在聊天框中新增訊息的輔助函數
+        function addMessageToChatbox(message, type, isError = false) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message', type);
+            if (isError) messageElement.style.color = '#dc3545';
+
+            const senderElement = document.createElement('div');
+            senderElement.classList.add('sender');
+            senderElement.textContent = type === 'user' ? '您' : 'Gemini';
+            
+            const contentElement = document.createElement('div');
+            contentElement.textContent = message;
+
+            messageElement.appendChild(senderElement);
+            messageElement.appendChild(contentElement);
+
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // 自動滾動到底部
+        }
+
+
+        // --- 以下為既有的 UI 工具函數，維持不變 ---
         function resetUI() {
             hideError();
             hideDataDisplay();
@@ -833,7 +928,7 @@
 
         function enableSubmitButton() {
             const submitBtn = document.getElementById('submitBtn');
-            if (submitBtn) { // 增加一個檢查，確保元素存在
+            if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.textContent = '開始AI綜合預測分析';
                 console.log("Submit button ENABLED.");
@@ -858,6 +953,10 @@
         document.getElementById('analysisDate').addEventListener('change', function() {
             console.log('日期已變更，重置UI');
             resetUI();
+            // 【新增】重置時也清空分析區
+            document.getElementById('analysisSection').style.display = 'none';
+            document.getElementById('analysisResults').innerHTML = '';
+            document.getElementById('chatContainerWrapper').innerHTML = '';
         });
     </script>
 </body>
