@@ -201,6 +201,7 @@ def get_bitcoin_5day_ohlc_chart(end_date=None):
             raise ValueError(f"數據不足，只有 {len(daily_df)} 條K線")
 
         # 生成圖表
+        plt.style.use('dark_background')
         fig, ax = plt.subplots(figsize=(10, 6))
         
         mpf.plot(
@@ -255,8 +256,8 @@ def predict_next_price_arima(fgi_values, price_values, order=(1,1,0)):
         raise ValueError("請提供5天的 fgi 和 price 資料")
 
     # exog要是2D array，shape=(5,1)
-    exog_train = np.array(fgi_values).reshape(-1, 1)
-    endog_train = np.array(price_values)
+    endog_train = np.array(price_values[::-1])
+    exog_train = np.array(fgi_values[::-1]).reshape(-1, 1)
     
     # 建立並擬合ARIMA模型
     model = ARIMA(endog=endog_train, exog=exog_train, order=order)
