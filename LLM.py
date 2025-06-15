@@ -292,8 +292,8 @@ def predict_image_class(image_path):
 
 def generate_llm_analysis(fgi_values, prices, image_class, image_prob, regression_price, arima_results):
     """生成LLM綜合分析"""
-    regression_confidence = 0.9921031529442089 
-    
+    regression_r2 = 0.9921031529442089 
+    regression_mse = 2182245.496926982
     
     user_input = f"""
     請根據以下市場數據進行整合分析：
@@ -304,10 +304,12 @@ def generate_llm_analysis(fgi_values, prices, image_class, image_prob, regressio
         
     2. 預測模型結果：
         回歸模型預測價格：${regression_price:.2f}
-        回歸模型信心指數：{regression_confidence:.4f} (R² Score)
+        回歸模型信心指數(R² Score)：{regression_r2:.2f} 
+        回歸模型評估 (MSE)：{regression_mse:.2f}
         ARIMA模型預測價格：${arima_results['prediction']:.2f}
         ARIMA模型評估：
         - AIC: {arima_results['metrics']['AIC']:.2f}
+        - BIC: {arima_results['metrics']['BIC']:.2f}
         - RMSE: {arima_results['metrics']['RMSE']:.2f}
             
     3.  圖形趨勢預測結果：
@@ -432,6 +434,10 @@ def index():
             # 解析 API 數據
             api_data = json.loads(request.form['api_data'])
             print("收到的 API 數據:", api_data)
+
+            regression_r2 = 0.9921031529442089
+            regression_mse = 2182245.496926982
+
             
             # 確保有5天數據，並強制轉換為數值型
             fgi_values = [float(item['value']) for item in api_data['fear_greed_data']] 
@@ -486,6 +492,8 @@ def index():
                 image_trend='上漲' if image_class == 1 else '下跌',
                 image_prob=image_prob,
                 regression_price=predicted_price,
+                regression_r2=regression_r2,
+                regression_mse=regression_mse,
                 arima_price=arima_results['prediction'],
                 arima_metrics=arima_results['metrics'],
                 user_input=user_input, # 傳遞初始用戶提問

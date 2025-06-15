@@ -8,16 +8,28 @@
     <div class="prediction-item">
         <span class="prediction-label">Reggression模型預測價格：</span>
         <span class="prediction-value">${{ "%.2f"|format(regression_price) }}</span>
-        <span class="prediction-confidence">(R² Score: 0.9921)</span>
+        
+        <div class="model-metrics">
+            <div style="margin-left: 20px;">
+                <p>R² Score: {{ "%.4f"|format(regression_r2) }}</p>
+                <p>MSE: {{ "%.2f"|format(regression_mse) }}</p>
+            </div>
+        </div>
+
     </div>
     <div class="prediction-item">
         <span class="prediction-label">ARIMA模型預測：</span>
         <span class="prediction-value">${{ "%.2f"|format(arima_price) }}</span>
+        
         {% if arima_metrics %}
         <div class="model-metrics">
-            <p>模型參數：({{ arima_metrics.order[0] }}, {{ arima_metrics.order[1] }}, {{ arima_metrics.order[2] }})</p>
-            <p>AIC：{{ "%.2f"|format(arima_metrics.AIC) }}</p>
-            <p>RMSE：{{ "%.2f"|format(arima_metrics.RMSE) }}</p>
+            <div style="margin-left: 20px;">
+                <p>模型參數：({{ arima_metrics.order[0] }}, {{ arima_metrics.order[1] }}, {{ arima_metrics.order[2] }})</p>
+                <p>AIC：{{ "%.2f"|format(arima_metrics.AIC) }}</p>
+                <p>BIC：{{ "%.2f"|format(arima_metrics.BIC) }}</p>
+                <p>RMSE：{{ "%.2f"|format(arima_metrics.RMSE) }}</p>
+                <p></p>
+            </div>
         </div>
         {% endif %}
     </div>
